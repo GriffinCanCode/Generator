@@ -1,0 +1,165 @@
+#!/bin/bash
+
+# Generate System - Main Executable
+# A comprehensive template generation system
+# Usage: generate <type> [options]
+
+set -e
+
+# Get the directory where this script is located
+# Handle both direct execution and symlink execution
+if [ -L "${BASH_SOURCE[0]}" ]; then
+    SCRIPT_PATH="$(readlink "${BASH_SOURCE[0]}")"
+    SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+TEMPLATES_DIR="$SCRIPT_DIR/templates"
+GENERATORS_DIR="$SCRIPT_DIR/generators"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to display usage
+usage() {
+    echo -e "${BLUE}Generate System - Template Generator${NC}"
+    echo ""
+    echo "Usage: generate <type> [options]"
+    echo ""
+    echo "Available generators:"
+    echo "  gitignore <language>    Generate .gitignore file for specified language"
+    echo "  directory <type>        Generate directory structure"
+    echo "  config <type>           Generate configuration files"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help             Show this help message"
+    echo "  -l, --list             List available templates"
+    echo "  -o, --output <path>    Specify output path (default: current directory)"
+    echo ""
+    echo "Examples:"
+    echo "  generate gitignore python"
+    echo "  generate gitignore node"
+    echo "  generate directory python-project"
+    echo "  generate config docker"
+}
+
+# Function to list available templates
+list_templates() {
+    echo -e "${BLUE}Available Templates:${NC}"
+    echo ""
+    
+    if [ -d "$TEMPLATES_DIR/gitignore" ]; then
+        echo -e "${GREEN}GitIgnore Templates:${NC}"
+        for template in "$TEMPLATES_DIR/gitignore"/*.gitignore; do
+            if [ -f "$template" ]; then
+                basename "$template" .gitignore | sed 's/^/  - /'
+            fi
+        done
+        echo ""
+    fi
+    
+    if [ -d "$TEMPLATES_DIR/directory" ]; then
+        echo -e "${GREEN}Directory Templates:${NC}"
+        for template in "$TEMPLATES_DIR/directory"/*; do
+            if [ -d "$template" ]; then
+                basename "$template" | sed 's/^/  - /'
+            fi
+        done
+        echo ""
+    fi
+    
+    if [ -d "$TEMPLATES_DIR/config" ]; then
+        echo -e "${GREEN}Config Templates:${NC}"
+        for template in "$TEMPLATES_DIR/config"/*; do
+            if [ -f "$template" ]; then
+                basename "$template" | sed 's/^/  - /'
+            fi
+        done
+    fi
+}
+
+# Function to generate gitignore
+generate_gitignore() {
+    local language="$1"
+    local output_path="${2:-./}"
+    
+    if [ -z "$language" ]; then
+        echo -e "${RED}Error: Language not specified${NC}"
+        echo "Usage: generate gitignore <language>"
+        echo "Available languages:"
+        for template in "$TEMPLATES_DIR/gitignore"/*.gitignore; do
+            if [ -f "$template" ]; then
+                basename "$template" .gitignore | sed 's/^/  - /'
+            fi
+        done
+        exit 1
+    fi
+    
+    local template_file="$TEMPLATES_DIR/gitignore/${language}.gitignore"
+    
+    if [ ! -f "$template_file" ]; then
+        echo -e "${RED}Error: Template for '$language' not found${NC}"
+        echo "Available templates:"
+        for template in "$TEMPLATES_DIR/gitignore"/*.gitignore; do
+            if [ -f "$template" ]; then
+                basename "$template" .gitignore | sed 's/^/  - /'
+            fi
+        done
+        exit 1
+    fi
+    
+    local output_file="$output_path/.gitignore"
+    
+    if [ -f "$output_file" ]; then
+        echo -e "${YELLOW}Warning: .gitignore already exists. Overwrite? (y/n)${NC}"
+        read -r response
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            echo "Operation cancelled."
+            exit 0
+        fi
+    fi
+    
+    cp "$template_file" "$output_file"
+    echo -e "${GREEN}Generated .gitignore for $language at $output_file${NC}"
+}
+
+# Main execution
+main() {
+    if [ $# -eq 0 ]; then
+        usage
+        exit 1
+    fi
+    
+    case "$1" in
+        -h|--help)
+            usage
+            ;;
+        -l|--list)
+            list_templates
+            ;;
+        gitignore)
+            shift
+            generate_gitignore "$@"
+            ;;
+        directory)
+            shift
+            "$GENERATORS_DIR/directory.sh" "$@"
+            ;;
+        config)
+            shift
+            "$GENERATORS_DIR/config.sh" "$@"
+            ;;
+        *)
+            echo -e "${RED}Error: Unknown command '$1'${NC}"
+            echo ""
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@" 

@@ -1,0 +1,184 @@
+# Dependencies
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment files
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+.nyc_output
+
+# Build outputs
+build/
+dist/
+out/
+.next/
+.nuxt/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+data/
+volumes/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+.docker/
+
+# Kubernetes
+*.yaml.bak
+*.yml.bak
+secrets/
+configmaps/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
+.terraform/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Cache directories
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+
+# Package managers
+package-lock.json
+yarn.lock
+Pipfile.lock
+poetry.lock
+
+# Monitoring and observability
+prometheus_data/
+grafana_data/
+jaeger_data/
+elasticsearch_data/
+
+# Service mesh
+istio/
+linkerd/
+
+# CI/CD
+.github/workflows/secrets/
+.gitlab-ci-local/
+
+# Helm
+charts/*/charts/
+charts/*/requirements.lock
+
+# Secrets and certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets.yaml
+secrets.yml
+
+# Local development
+local/
+dev/
+development/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Service-specific builds
+services/*/build/
+services/*/dist/
+services/*/node_modules/
+services/*/.env
+services/*/.env.local
+
+# Shared libraries build artifacts
+shared/*/build/
+shared/*/dist/
+shared/*/lib/ 
