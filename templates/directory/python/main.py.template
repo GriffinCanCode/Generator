@@ -1,0 +1,8 @@
+"""Main module for {{PROJECT_NAME}}."""
+
+def main():
+    """Main function."""
+    print("Hello from {{PROJECT_NAME}}!")
+
+if __name__ == "__main__":
+    main() 

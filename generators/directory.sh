@@ -4,7 +4,7 @@
 # Usage: generate directory <type>
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TEMPLATES_DIR="$SCRIPT_DIR/../templates/directory"
+TEMPLATES_DIR="$SCRIPT_DIR/../templates"
 
 # Colors for output
 RED='\033[0;31m'
@@ -12,6 +12,21 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# Helper function to copy template files
+copy_template() {
+    local template_type="$1"
+    local template_file="$2"
+    local output_file="$3"
+    local project_name="${4:-myapp}"
+    
+    if [ -f "$TEMPLATES_DIR/$template_type/$template_file" ]; then
+        sed "s/{{PROJECT_NAME}}/$project_name/g" "$TEMPLATES_DIR/$template_type/$template_file" > "$output_file"
+    else
+        echo -e "${RED}Template file not found: $template_type/$template_file${NC}"
+        return 1
+    fi
+}
 
 generate_python_project() {
     local project_name="${1:-python-project}"
@@ -42,78 +57,15 @@ generate_python_project() {
     touch pyproject.toml
     
     # Create basic content
-    cat > src/$project_name/main.py << EOF
-"""Main module for $project_name."""
-
-def main():
-    """Main function."""
-    print("Hello from $project_name!")
-
-if __name__ == "__main__":
-    main()
-EOF
-
-    cat > tests/test_main.py << EOF
-"""Tests for main module."""
-
-import pytest
-from src.$project_name.main import main
-
-def test_main():
-    """Test main function."""
-    # Add your tests here
-    pass
-EOF
-
-    cat > README.md << EOF
-# $project_name
-
-Description of your project.
-
-## Installation
-
-\`\`\`bash
-pip install -r requirements.txt
-\`\`\`
-
-## Usage
-
-\`\`\`bash
-python src/$project_name/main.py
-\`\`\`
-
-## Testing
-
-\`\`\`bash
-pytest
-\`\`\`
-EOF
-
+    copy_template "directory/python" "main.py.template" "src/$project_name/main.py" "$project_name"
+    copy_template "directory/python" "test_main.py.template" "tests/test_main.py" "$project_name"
+    copy_template "directory/python" "README.md.template" "README.md" "$project_name"
+    copy_template "directory/python" "pyproject.toml.template" "pyproject.toml" "$project_name"
+    
+    # Create requirements.txt
     cat > requirements.txt << EOF
 # Add your dependencies here
 pytest>=7.0.0
-EOF
-
-    cat > pyproject.toml << EOF
-[build-system]
-requires = ["setuptools>=45", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "$project_name"
-version = "0.1.0"
-description = "A Python project"
-authors = [{name = "Your Name", email = "your.email@example.com"}]
-readme = "README.md"
-requires-python = ">=3.8"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
-
-[project.scripts]
-$project_name = "src.$project_name.main:main"
 EOF
 
     echo -e "${GREEN}Python project structure created successfully!${NC}"
@@ -143,22 +95,10 @@ generate_node_project() {
     touch .env.example
     
     # Create basic content
-    cat > src/index.js << EOF
-/**
- * Main entry point for $project_name
- */
-
-function main() {
-    console.log('Hello from $project_name!');
-}
-
-if (require.main === module) {
-    main();
-}
-
-module.exports = { main };
-EOF
-
+    copy_template "directory/node" "index.js.template" "src/index.js" "$project_name"
+    copy_template "directory/node" "package.json.template" "package.json" "$project_name"
+    
+    # Create test file
     cat > tests/index.test.js << EOF
 const { main } = require('../src/index');
 
@@ -169,27 +109,7 @@ describe('Main module', () => {
 });
 EOF
 
-    cat > package.json << EOF
-{
-  "name": "$project_name",
-  "version": "1.0.0",
-  "description": "A Node.js project",
-  "main": "src/index.js",
-  "scripts": {
-    "start": "node src/index.js",
-    "test": "jest",
-    "dev": "nodemon src/index.js"
-  },
-  "keywords": [],
-  "author": "Your Name",
-  "license": "MIT",
-  "devDependencies": {
-    "jest": "^29.0.0",
-    "nodemon": "^3.0.0"
-  }
-}
-EOF
-
+    # Create README
     cat > README.md << EOF
 # $project_name
 

@@ -1,0 +1,70 @@
+const { app, BrowserWindow, ipcMain } = require('electron');
+const path = require('path');
+const isDev = require('electron-is-dev');
+
+// Keep a global reference of the window object
+let mainWindow;
+
+function createWindow() {
+  // Create the browser window
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    webPreferences: {
+      nodeIntegration: false, // Security best practice
+      contextIsolation: true, // Security best practice
+      enableRemoteModule: false, // Security best practice
+      preload: path.join(__dirname, '../preload/preload.js')
+    },
+    show: false // Don't show until ready-to-show
+  });
+
+  // Load the app
+  const startUrl = isDev 
+    ? 'http://localhost:3000' 
+    : `file://${path.join(__dirname, '../renderer/build/index.html')}`;
+  
+  mainWindow.loadURL(startUrl);
+
+  // Show window when ready to prevent visual flash
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    
+    // Open DevTools in development
+    if (isDev) {
+      mainWindow.webContents.openDevTools();
+    }
+  });
+
+  // Handle window closed
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+}
+
+// App event handlers
+app.whenReady().then(createWindow);
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});
+
+// Security: Prevent new window creation
+app.on('web-contents-created', (event, contents) => {
+  contents.on('new-window', (event, navigationUrl) => {
+    event.preventDefault();
+  });
+});
+
+// IPC handlers
+require('./ipc/ipc-handlers');
+
+module.exports = { mainWindow }; 

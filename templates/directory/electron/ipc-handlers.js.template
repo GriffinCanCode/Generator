@@ -1,0 +1,118 @@
+const { ipcMain, app, shell, dialog, Notification, BrowserWindow } = require('electron');
+const fs = require('fs').promises;
+const path = require('path');
+
+// App handlers
+ipcMain.handle('app:get-version', () => {
+  return app.getVersion();
+});
+
+// File operation handlers
+ipcMain.handle('file:open', async () => {
+  try {
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile'],
+      filters: [
+        { name: 'Text Files', extensions: ['txt', 'md'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+
+    if (!result.canceled && result.filePaths.length > 0) {
+      const filePath = result.filePaths[0];
+      const content = await fs.readFile(filePath, 'utf-8');
+      return { success: true, content, filePath };
+    }
+    
+    return { success: false, message: 'No file selected' };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+});
+
+ipcMain.handle('file:save', async (event, content) => {
+  try {
+    const result = await dialog.showSaveDialog({
+      filters: [
+        { name: 'Text Files', extensions: ['txt', 'md'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+
+    if (!result.canceled && result.filePath) {
+      await fs.writeFile(result.filePath, content, 'utf-8');
+      return { success: true, filePath: result.filePath };
+    }
+    
+    return { success: false, message: 'Save cancelled' };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+});
+
+// Window operation handlers
+ipcMain.handle('window:minimize', () => {
+  const window = BrowserWindow.getFocusedWindow();
+  if (window) window.minimize();
+});
+
+ipcMain.handle('window:maximize', () => {
+  const window = BrowserWindow.getFocusedWindow();
+  if (window) {
+    if (window.isMaximized()) {
+      window.unmaximize();
+    } else {
+      window.maximize();
+    }
+  }
+});
+
+ipcMain.handle('window:close', () => {
+  const window = BrowserWindow.getFocusedWindow();
+  if (window) window.close();
+});
+
+// System operation handlers
+ipcMain.handle('system:notification', (event, { title, body }) => {
+  if (Notification.isSupported()) {
+    new Notification({ title, body }).show();
+    return { success: true };
+  }
+  return { success: false, message: 'Notifications not supported' };
+});
+
+ipcMain.handle('system:open-external', async (event, url) => {
+  try {
+    await shell.openExternal(url);
+    return { success: true };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+});
+
+// Settings handlers
+const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+
+ipcMain.handle('settings:get', async () => {
+  try {
+    const data = await fs.readFile(settingsPath, 'utf-8');
+    return { success: true, settings: JSON.parse(data) };
+  } catch (error) {
+    // Return default settings if file doesn't exist
+    const defaultSettings = {
+      theme: 'light',
+      language: 'en',
+      autoSave: true
+    };
+    return { success: true, settings: defaultSettings };
+  }
+});
+
+ipcMain.handle('settings:save', async (event, settings) => {
+  try {
+    await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+    return { success: true };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+}); 

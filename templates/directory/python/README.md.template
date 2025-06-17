@@ -1,0 +1,21 @@
+# {{PROJECT_NAME}}
+
+Description of your project.
+
+## Installation
+
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+```bash
+python src/{{PROJECT_NAME}}/main.py
+```
+
+## Testing
+
+```bash
+pytest
+``` 

@@ -4,7 +4,7 @@
 # Usage: generate config <type>
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TEMPLATES_DIR="$SCRIPT_DIR/../templates/config"
+TEMPLATES_DIR="$SCRIPT_DIR/../templates"
 
 # Colors for output
 RED='\033[0;31m'
@@ -13,90 +13,33 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Helper function to copy template files
+copy_template() {
+    local template_file="$1"
+    local output_file="$2"
+    local project_name="${3:-myapp}"
+    
+    if [ -f "$TEMPLATES_DIR/config/$template_file" ]; then
+        sed "s/{{PROJECT_NAME}}/$project_name/g" "$TEMPLATES_DIR/config/$template_file" > "$output_file"
+    else
+        echo -e "${RED}Template file not found: $template_file${NC}"
+        return 1
+    fi
+}
+
 generate_docker_config() {
     local output_path="${1:-./}"
     
     echo -e "${BLUE}Creating Docker configuration files${NC}"
     
     # Create Dockerfile
-    cat > "$output_path/Dockerfile" << EOF
-# Use official Node.js runtime as base image
-FROM node:18-alpine
-
-# Set working directory
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm ci --only=production
-
-# Copy application code
-COPY . .
-
-# Expose port
-EXPOSE 3000
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-
-# Change ownership of the app directory
-RUN chown -R nextjs:nodejs /app
-USER nextjs
-
-# Start the application
-CMD ["npm", "start"]
-EOF
-
-    # Create docker-compose.yml
-    cat > "$output_path/docker-compose.yml" << EOF
-version: '3.8'
-
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-    volumes:
-      - ./data:/app/data
-    restart: unless-stopped
+    copy_template "dockerfile.template" "$output_path/Dockerfile"
     
-  db:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_DB: myapp
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
-EOF
-
+    # Create docker-compose.yml
+    copy_template "docker-compose.template" "$output_path/docker-compose.yml"
+    
     # Create .dockerignore
-    cat > "$output_path/.dockerignore" << EOF
-node_modules
-npm-debug.log
-.git
-.gitignore
-README.md
-.env
-.nyc_output
-coverage
-.nyc_output
-.coverage
-.cache
-.parcel-cache
-.next
-.nuxt
-dist
-EOF
+    copy_template "dockerignore.template" "$output_path/.dockerignore"
 
     echo -e "${GREEN}Docker configuration files created successfully!${NC}"
 }
@@ -106,46 +49,8 @@ generate_eslint_config() {
     
     echo -e "${BLUE}Creating ESLint configuration${NC}"
     
-    cat > "$output_path/.eslintrc.js" << EOF
-module.exports = {
-  env: {
-    browser: true,
-    es2021: true,
-    node: true,
-  },
-  extends: [
-    'eslint:recommended',
-    '@typescript-eslint/recommended',
-    'prettier',
-  ],
-  parser: '@typescript-eslint/parser',
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-  },
-  plugins: [
-    '@typescript-eslint',
-  ],
-  rules: {
-    'indent': ['error', 2],
-    'linebreak-style': ['error', 'unix'],
-    'quotes': ['error', 'single'],
-    'semi': ['error', 'always'],
-    '@typescript-eslint/no-unused-vars': 'error',
-    '@typescript-eslint/no-explicit-any': 'warn',
-  },
-};
-EOF
-
-    cat > "$output_path/.eslintignore" << EOF
-node_modules
-dist
-build
-.next
-.nuxt
-coverage
-*.min.js
-EOF
+    copy_template "eslintrc.template" "$output_path/.eslintrc.js"
+    copy_template "eslintignore.template" "$output_path/.eslintignore"
 
     echo -e "${GREEN}ESLint configuration created successfully!${NC}"
 }
@@ -155,30 +60,8 @@ generate_prettier_config() {
     
     echo -e "${BLUE}Creating Prettier configuration${NC}"
     
-    cat > "$output_path/.prettierrc" << EOF
-{
-  "semi": true,
-  "trailingComma": "es5",
-  "singleQuote": true,
-  "printWidth": 80,
-  "tabWidth": 2,
-  "useTabs": false,
-  "bracketSpacing": true,
-  "arrowParens": "avoid"
-}
-EOF
-
-    cat > "$output_path/.prettierignore" << EOF
-node_modules
-dist
-build
-.next
-.nuxt
-coverage
-*.min.js
-package-lock.json
-yarn.lock
-EOF
+    copy_template "prettierrc.template" "$output_path/.prettierrc"
+    copy_template "prettierignore.template" "$output_path/.prettierignore"
 
     echo -e "${GREEN}Prettier configuration created successfully!${NC}"
 }
@@ -190,38 +73,8 @@ generate_vscode_config() {
     
     mkdir -p "$output_path/.vscode"
     
-    cat > "$output_path/.vscode/settings.json" << EOF
-{
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
-  },
-  "typescript.preferences.importModuleSpecifier": "relative",
-  "files.exclude": {
-    "**/node_modules": true,
-    "**/dist": true,
-    "**/build": true
-  },
-  "search.exclude": {
-    "**/node_modules": true,
-    "**/dist": true,
-    "**/build": true
-  }
-}
-EOF
-
-    cat > "$output_path/.vscode/extensions.json" << EOF
-{
-  "recommendations": [
-    "esbenp.prettier-vscode",
-    "dbaeumer.vscode-eslint",
-    "ms-vscode.vscode-typescript-next",
-    "bradlc.vscode-tailwindcss",
-    "ms-vscode.vscode-json"
-  ]
-}
-EOF
+    copy_template "vscode-settings.template" "$output_path/.vscode/settings.json"
+    copy_template "vscode-extensions.template" "$output_path/.vscode/extensions.json"
 
     echo -e "${GREEN}VS Code configuration created successfully!${NC}"
 }
