@@ -662,6 +662,73 @@ EOF
     echo -e "${GREEN}React Frontend project created successfully!${NC}"
 }
 
+generate_electron_app() {
+    local project_name="${1:-electron-app}"
+    local output_path="${2:-./}"
+    
+    echo -e "${BLUE}Creating Electron Desktop Application: $project_name${NC}"
+    
+    mkdir -p "$output_path/$project_name"
+    cd "$output_path/$project_name"
+    
+    # Create comprehensive directory structure following best practices
+    mkdir -p {src/{main/{app,ipc,windows,utils},renderer/{components/{ui,layout,common},pages,hooks,services,store,styles},preload,shared,types},assets/{images,icons},build,dist,tests/{unit,integration,e2e},scripts,docs}
+    
+    # Create main process files
+    copy_template "directory/electron" "main.js.template" "src/main/app/main.js" "$project_name"
+    copy_template "directory/electron" "ipc-handlers.js.template" "src/main/ipc/ipc-handlers.js" "$project_name"
+    
+    # Create preload script
+    copy_template "directory/electron" "preload.js.template" "src/preload/preload.js" "$project_name"
+    
+    # Create package.json and README
+    copy_template "directory/electron" "package.json.template" "package.json" "$project_name"
+    copy_template "directory/electron" "README.md.template" "README.md" "$project_name"
+    
+    # Create placeholder files for key directories
+    touch src/main/windows/.gitkeep
+    touch src/main/utils/.gitkeep
+    touch src/renderer/components/ui/.gitkeep
+    touch src/renderer/components/layout/.gitkeep
+    touch src/renderer/components/common/.gitkeep
+    touch src/renderer/pages/.gitkeep
+    touch src/renderer/hooks/.gitkeep
+    touch src/renderer/services/.gitkeep
+    touch src/renderer/store/.gitkeep
+    touch src/renderer/styles/.gitkeep
+    touch src/shared/.gitkeep
+    touch src/types/.gitkeep
+    touch assets/images/.gitkeep
+    touch assets/icons/.gitkeep
+    touch build/.gitkeep
+    touch tests/unit/.gitkeep
+    touch tests/integration/.gitkeep
+    touch tests/e2e/.gitkeep
+    touch scripts/.gitkeep
+    touch docs/.gitkeep
+    
+    # Create environment file
+    cat > .env.example << 'EOF'
+# Development environment variables
+NODE_ENV=development
+ELECTRON_IS_DEV=true
+
+# App configuration
+APP_NAME={{PROJECT_NAME}}
+APP_VERSION=1.0.0
+
+# Build configuration
+BUILD_TARGET=development
+EOF
+
+    echo -e "${GREEN}Electron Desktop Application created successfully!${NC}"
+    echo -e "${YELLOW}Next steps:${NC}"
+    echo -e "  1. cd $project_name"
+    echo -e "  2. npm install"
+    echo -e "  3. Set up your renderer framework (React, Vue, etc.) in src/renderer/"
+    echo -e "  4. npm run dev"
+}
+
 generate_microservices() {
     local project_name="${1:-microservices-stack}"
     local output_path="${2:-./}"
@@ -879,6 +946,10 @@ case "$1" in
         shift
         generate_react_frontend "$@"
         ;;
+    electron|electron-app)
+        shift
+        generate_electron_app "$@"
+        ;;
     microservices|microservices-stack)
         shift
         generate_microservices "$@"
@@ -896,6 +967,9 @@ case "$1" in
         echo ""
         echo -e "${GREEN}Backend Projects:${NC}"
         echo "  fastapi-backend           - FastAPI backend with PostgreSQL, SQLAlchemy"
+        echo ""
+        echo -e "${GREEN}Desktop Applications:${NC}"
+        echo "  electron, electron-app    - Cross-platform desktop app with Electron.js"
         echo ""
         echo -e "${GREEN}Fullstack Projects:${NC}"
         echo "  nextjs-fullstack          - Next.js 14 with API routes, Prisma, TypeScript"

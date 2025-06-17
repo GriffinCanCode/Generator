@@ -1,0 +1,121 @@
+# {{PROJECT_NAME}}
+
+A cross-platform desktop application built with Electron.js following modern best practices.
+
+## Architecture
+
+This project follows a scalable, security-focused architecture with clear separation of concerns:
+
+```
+{{PROJECT_NAME}}/
+├── src/
+│   ├── main/                 # Main process (backend logic)
+│   │   ├── app/             # Core application logic
+│   │   ├── ipc/             # Inter-process communication handlers
+│   │   ├── windows/         # Window management
+│   │   └── utils/           # Main process utilities
+│   ├── renderer/            # Renderer process (frontend UI)
+│   │   ├── components/      # React/UI components
+│   │   ├── pages/           # Application pages/screens
+│   │   ├── hooks/           # Custom React hooks
+│   │   ├── services/        # API and data services
+│   │   ├── store/           # State management
+│   │   └── styles/          # CSS/styling files
+│   ├── preload/             # Preload scripts (secure API bridge)
+│   ├── shared/              # Shared utilities and types
+│   └── types/               # TypeScript type definitions
+├── assets/                  # Static assets (images, icons)
+├── build/                   # Build configuration
+├── dist/                    # Distribution files
+└── tests/                   # Test files
+```
+
+## Features
+
+- **Cross-Platform**: Runs on Windows, macOS, and Linux
+- **Modern Security**: Context isolation, no node integration in renderer
+- **Modular Architecture**: Clear separation between main and renderer processes
+- **IPC Communication**: Secure inter-process communication via preload scripts
+- **Hot Reload**: Development mode with automatic reloading
+- **Build System**: Automated building and packaging for all platforms
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v16 or higher)
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd {{PROJECT_NAME}}
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Install renderer dependencies:
+```bash
+cd src/renderer
+npm install
+cd ../..
+```
+
+### Development
+
+1. Start the development server:
+```bash
+npm run dev
+```
+
+This will start both the renderer process (React dev server) and the Electron main process with hot reload.
+
+### Building
+
+1. Build for production:
+```bash
+npm run build
+```
+
+2. Package for distribution:
+```bash
+npm run dist
+```
+
+## Scripts
+
+- `npm start` - Start the production app
+- `npm run dev` - Start development mode with hot reload
+- `npm run build` - Build the application for production
+- `npm run pack` - Package the app without creating installers
+- `npm run dist` - Create distributable packages for all platforms
+- `npm test` - Run tests
+- `npm run lint` - Run ESLint
+
+## Security
+
+This project follows Electron security best practices:
+
+- **Context Isolation**: Enabled to prevent renderer access to Node.js
+- **No Node Integration**: Disabled in renderer for security
+- **Preload Scripts**: Used to safely expose APIs to renderer
+- **Content Security Policy**: Implemented to prevent XSS attacks
+- **Secure Defaults**: All security features enabled by default
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Run the linter and tests
+6. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details. 
