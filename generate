@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Generate System - Main Executable
-# A comprehensive template generation system
+# A comprehensive template generation system with smart append functionality
 # Usage: generate <type> [options]
 
 set -e
@@ -22,11 +22,72 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
+
+# Function to get smart mapping for a given type
+get_smart_mapping() {
+    local type="$1"
+    
+    case "$type" in
+        # Electron mappings
+        "electron"|"electron-app")
+            echo "directory:electron gitignore:node config:eslint config:prettier config:vscode"
+            ;;
+        # Node.js mappings
+        "node"|"nodejs"|"node-project")
+            echo "directory:node gitignore:node config:eslint config:prettier config:vscode"
+            ;;
+        # Python mappings
+        "python"|"python-project")
+            echo "directory:python gitignore:python config:vscode"
+            ;;
+        # React mappings
+        "react"|"react-frontend")
+            echo "directory:react-frontend gitignore:react config:eslint config:prettier config:vscode"
+            ;;
+        # Next.js mappings
+        "nextjs"|"next"|"nextjs-fullstack")
+            echo "directory:nextjs-fullstack gitignore:nextjs config:eslint config:prettier config:vscode"
+            ;;
+        # FastAPI mappings
+        "fastapi"|"fastapi-backend")
+            echo "directory:fastapi-backend gitignore:fastapi config:docker config:vscode"
+            ;;
+        # Docker mappings
+        "docker"|"docker-project")
+            echo "config:docker gitignore:docker"
+            ;;
+        # Microservices mappings
+        "microservices"|"microservices-stack")
+            echo "directory:microservices gitignore:microservices config:docker config:kubernetes config:monitoring"
+            ;;
+        # Full-stack combinations
+        "fullstack"|"full-stack")
+            echo "directory:nextjs-fullstack directory:fastapi-backend gitignore:nextjs config:docker config:eslint config:prettier config:vscode"
+            ;;
+        *)
+            echo ""
+            ;;
+    esac
+}
+
+# Function to list all smart append options
+list_smart_mappings() {
+    echo "electron electron-app"
+    echo "node nodejs node-project"
+    echo "python python-project"
+    echo "react react-frontend"
+    echo "nextjs next nextjs-fullstack"
+    echo "fastapi fastapi-backend"
+    echo "docker docker-project"
+    echo "microservices microservices-stack"
+    echo "fullstack full-stack"
+}
 
 # Function to display usage
 usage() {
-    echo -e "${BLUE}Generate System - Template Generator${NC}"
+    echo -e "${BLUE}Generate System - Template Generator with Smart Append${NC}"
     echo ""
     echo "Usage: generate <type> [options]"
     echo ""
@@ -35,16 +96,54 @@ usage() {
     echo "  directory <type>        Generate directory structure"
     echo "  config <type>           Generate configuration files"
     echo ""
+    echo -e "${PURPLE}Smart Append (Auto-generates related templates):${NC}"
+    echo "  electron               Generate Electron app with configs and gitignore"
+    echo "  node                   Generate Node.js project with full setup"
+    echo "  python                 Generate Python project with full setup"
+    echo "  react                  Generate React frontend with full setup"
+    echo "  nextjs                 Generate Next.js fullstack with full setup"
+    echo "  fastapi                Generate FastAPI backend with full setup"
+    echo "  microservices          Generate microservices stack with full setup"
+    echo "  fullstack              Generate complete fullstack setup"
+    echo ""
     echo "Options:"
     echo "  -h, --help             Show this help message"
     echo "  -l, --list             List available templates"
+    echo "  -s, --smart            List available smart append options"
     echo "  -o, --output <path>    Specify output path (default: current directory)"
+    echo "  --dry-run              Show what would be generated without creating files"
     echo ""
     echo "Examples:"
-    echo "  generate gitignore python"
-    echo "  generate gitignore node"
-    echo "  generate directory python-project"
-    echo "  generate config docker"
+    echo "  generate electron my-app           # Creates Electron app with all configs"
+    echo "  generate python my-project         # Creates Python project with setup"
+    echo "  generate fullstack my-app          # Creates complete fullstack setup"
+    echo "  generate node --dry-run            # Shows what would be generated"
+}
+
+# Function to list smart append options
+list_smart_options() {
+    echo -e "${PURPLE}Smart Append Options:${NC}"
+    echo ""
+    
+    local mappings=(
+        "electron:directory:electron gitignore:node config:eslint config:prettier config:vscode"
+        "node:directory:node gitignore:node config:eslint config:prettier config:vscode"
+        "python:directory:python gitignore:python config:vscode"
+        "react:directory:react-frontend gitignore:react config:eslint config:prettier config:vscode"
+        "nextjs:directory:nextjs-fullstack gitignore:nextjs config:eslint config:prettier config:vscode"
+        "fastapi:directory:fastapi-backend gitignore:fastapi config:docker config:vscode"
+        "docker:config:docker gitignore:docker"
+        "microservices:directory:microservices gitignore:microservices config:docker config:kubernetes config:monitoring"
+        "fullstack:directory:nextjs-fullstack directory:fastapi-backend gitignore:nextjs config:docker config:eslint config:prettier config:vscode"
+    )
+    
+    for mapping in "${mappings[@]}"; do
+        local key="${mapping%%:*}"
+        local commands="${mapping#*:}"
+        echo -e "  ${GREEN}$key${NC}"
+        echo "    Generates: $commands"
+        echo ""
+    done
 }
 
 # Function to list available templates
@@ -79,7 +178,107 @@ list_templates() {
                 basename "$template" | sed 's/^/  - /'
             fi
         done
+        echo ""
     fi
+    
+    list_smart_options
+}
+
+# Function to execute smart append
+smart_append() {
+    local type="$1"
+    local project_name="$2"
+    local output_path="${3:-./}"
+    local dry_run="$4"
+    
+    # Normalize the type (convert to lowercase and handle variations)
+    local normalized_type=$(echo "$type" | tr '[:upper:]' '[:lower:]' | sed 's/-app$//' | sed 's/-project$//')
+    
+    # Try to find a mapping
+    local mapping=""
+    mapping=$(get_smart_mapping "$type")
+    
+    if [ -z "$mapping" ]; then
+        mapping=$(get_smart_mapping "$normalized_type")
+    fi
+    
+    # Try partial matching if still no mapping found
+    if [ -z "$mapping" ]; then
+        local smart_keys=$(list_smart_mappings)
+        for line in $smart_keys; do
+            for key in $line; do
+                if [[ "$type" =~ $key ]] || [[ "$key" =~ $type ]]; then
+                    mapping=$(get_smart_mapping "$key")
+                    break 2
+                fi
+            done
+        done
+    fi
+    
+    if [ -z "$mapping" ]; then
+        return 1  # No smart mapping found
+    fi
+    
+    echo -e "${PURPLE}Smart Append: Generating $type setup${NC}"
+    if [ -n "$project_name" ]; then
+        echo -e "${BLUE}Project Name: $project_name${NC}"
+    fi
+    echo -e "${BLUE}Output Path: $output_path${NC}"
+    echo ""
+    
+    if [ "$dry_run" = "true" ]; then
+        echo -e "${YELLOW}DRY RUN - The following would be generated:${NC}"
+    fi
+    
+    # Parse and execute each command in the mapping
+    for cmd in $mapping; do
+        local cmd_type="${cmd%%:*}"
+        local cmd_arg="${cmd#*:}"
+        
+        if [ "$dry_run" = "true" ]; then
+            echo -e "  ${GREEN}Would run:${NC} generate $cmd_type $cmd_arg"
+            continue
+        fi
+        
+        echo -e "${BLUE}Generating:${NC} $cmd_type $cmd_arg"
+        
+        case "$cmd_type" in
+            "directory")
+                if [ -n "$project_name" ]; then
+                    "$GENERATORS_DIR/directory.sh" "$cmd_arg" "$project_name" "$output_path"
+                else
+                    "$GENERATORS_DIR/directory.sh" "$cmd_arg" "$output_path"
+                fi
+                ;;
+            "gitignore")
+                if [ -n "$project_name" ] && [ -d "$output_path/$project_name" ]; then
+                    generate_gitignore "$cmd_arg" "$output_path/$project_name"
+                else
+                    generate_gitignore "$cmd_arg" "$output_path"
+                fi
+                ;;
+            "config")
+                if [ -n "$project_name" ] && [ -d "$output_path/$project_name" ]; then
+                    "$GENERATORS_DIR/config.sh" "$cmd_arg" "$output_path/$project_name"
+                else
+                    "$GENERATORS_DIR/config.sh" "$cmd_arg" "$output_path"
+                fi
+                ;;
+        esac
+        echo ""
+    done
+    
+    if [ "$dry_run" != "true" ]; then
+        echo -e "${GREEN}Smart Append completed successfully!${NC}"
+        echo -e "${YELLOW}Next steps:${NC}"
+        if [ -n "$project_name" ]; then
+            echo -e "  1. cd $project_name"
+        fi
+        echo -e "  2. Install dependencies (npm install, pip install -r requirements.txt, etc.)"
+        echo -e "  3. Start development"
+    fi
+    
+    return 0
 }
 
 # Function to generate gitignore
@@ -134,29 +333,81 @@ main() {
         exit 1
     fi
     
-    case "$1" in
-        -h|--help)
-            usage
-            ;;
-        -l|--list)
-            list_templates
-            ;;
+    # Parse options
+    local dry_run="false"
+    local output_path="./"
+    local args=()
+    
+    while [ $# -gt 0 ]; do
+        case $1 in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -l|--list)
+                list_templates
+                exit 0
+                ;;
+            -s|--smart)
+                list_smart_options
+                exit 0
+                ;;
+            --dry-run)
+                dry_run="true"
+                shift
+                ;;
+            -o|--output)
+                output_path="$2"
+                shift 2
+                ;;
+            *)
+                args+=("$1")
+                shift
+                ;;
+        esac
+    done
+    
+    # Restore positional parameters
+    set -- "${args[@]}"
+    
+    if [ ${#args[@]} -eq 0 ]; then
+        usage
+        exit 1
+    fi
+    
+    local command="${args[0]}"
+    
+    # Try smart append first
+    if smart_append "$command" "${args[1]}" "$output_path" "$dry_run"; then
+        exit 0
+    fi
+    
+    # Fall back to original commands
+    case "$command" in
         gitignore)
-            shift
-            generate_gitignore "$@"
+            generate_gitignore "${args[1]}" "$output_path"
             ;;
         directory)
-            shift
-            "$GENERATORS_DIR/directory.sh" "$@"
+            "$GENERATORS_DIR/directory.sh" "${args[@]:1}"
             ;;
         config)
-            shift
-            "$GENERATORS_DIR/config.sh" "$@"
+            "$GENERATORS_DIR/config.sh" "${args[@]:1}"
             ;;
         *)
-            echo -e "${RED}Error: Unknown command '$1'${NC}"
+            echo -e "${RED}Error: Unknown command '$command'${NC}"
             echo ""
-            usage
+            echo "Try one of these smart append options:"
+            local smart_keys=$(list_smart_mappings)
+            for line in $smart_keys; do
+                for key in $line; do
+                    echo "  generate $key [project-name]"
+                done
+            done
+            echo ""
+            echo "Or use traditional commands:"
+            echo "  generate gitignore <language>"
+            echo "  generate directory <type>"
+            echo "  generate config <type>"
             exit 1
             ;;
     esac
