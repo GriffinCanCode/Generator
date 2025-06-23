@@ -729,6 +729,71 @@ EOF
     echo -e "  4. npm run dev"
 }
 
+generate_docs_structure() {
+    local project_name="${1:-docs}"
+    local output_path="${2:-./}"
+    
+    echo -e "${BLUE}Creating Documentation Structure: $project_name${NC}"
+    
+    local docs_path="$output_path"
+    if [ "$project_name" != "docs" ]; then
+        docs_path="$output_path/$project_name"
+        mkdir -p "$docs_path"
+    fi
+    
+    # Create main documentation directories
+    mkdir -p "$docs_path"/{architecture,tech-stack,api,development,deployment,contributing,user-guide,security,troubleshooting}
+    
+    # Create main README
+    copy_template "directory/docs" "README.md.template" "$docs_path/README.md" "$project_name"
+    
+    # Create subdirectory READMEs
+    copy_template "directory/docs/architecture" "README.md.template" "$docs_path/architecture/README.md" "$project_name"
+    copy_template "directory/docs/tech-stack" "README.md.template" "$docs_path/tech-stack/README.md" "$project_name"
+    copy_template "directory/docs/api" "README.md.template" "$docs_path/api/README.md" "$project_name"
+    copy_template "directory/docs/development" "README.md.template" "$docs_path/development/README.md" "$project_name"
+    copy_template "directory/docs/deployment" "README.md.template" "$docs_path/deployment/README.md" "$project_name"
+    copy_template "directory/docs/contributing" "README.md.template" "$docs_path/contributing/README.md" "$project_name"
+    copy_template "directory/docs/user-guide" "README.md.template" "$docs_path/user-guide/README.md" "$project_name"
+    copy_template "directory/docs/security" "README.md.template" "$docs_path/security/README.md" "$project_name"
+    copy_template "directory/docs/troubleshooting" "README.md.template" "$docs_path/troubleshooting/README.md" "$project_name"
+    
+    # Create placeholder files for common documentation
+    touch "$docs_path/architecture"/{overview.md,database-design.md,api-design.md,security-architecture.md,deployment-architecture.md}
+    touch "$docs_path/tech-stack"/{overview.md,frontend.md,backend.md,database.md,devops.md,monitoring.md}
+    touch "$docs_path/api"/{reference.md,authentication.md,postman-collection.json}
+    touch "$docs_path/development"/{getting-started.md,coding-standards.md,testing.md,debugging.md,workflows.md}
+    touch "$docs_path/deployment"/{production.md,staging.md,docker.md,kubernetes.md,monitoring.md,backup-restore.md}
+    touch "$docs_path/contributing"/{guidelines.md,code-of-conduct.md,pull-request-template.md,review-process.md}
+    touch "$docs_path/user-guide"/{getting-started.md,faq.md,troubleshooting.md}
+    touch "$docs_path/security"/{security-policy.md,authentication.md,authorization.md,data-protection.md,incident-response.md}
+    touch "$docs_path/troubleshooting"/{common-issues.md,error-codes.md,performance.md,database-issues.md,deployment-issues.md}
+    
+    # Create subdirectories for organized content
+    mkdir -p "$docs_path/api"/{endpoints,examples}
+    mkdir -p "$docs_path/user-guide"/{tutorials,features}
+    mkdir -p "$docs_path/contributing"/issue-templates
+    
+    # Create placeholder files in subdirectories
+    touch "$docs_path/api/endpoints"/.gitkeep
+    touch "$docs_path/api/examples"/.gitkeep
+    touch "$docs_path/user-guide/tutorials"/.gitkeep
+    touch "$docs_path/user-guide/features"/.gitkeep
+    touch "$docs_path/contributing/issue-templates"/.gitkeep
+    
+    echo -e "${GREEN}Documentation structure created successfully!${NC}"
+    echo -e "${YELLOW}Documentation directories created:${NC}"
+    echo -e "  • architecture/ - System design and architecture docs"
+    echo -e "  • tech-stack/ - Technology choices and documentation"
+    echo -e "  • api/ - API documentation and reference"
+    echo -e "  • development/ - Development guides and setup"
+    echo -e "  • deployment/ - Deployment and operations guides"
+    echo -e "  • contributing/ - Contributing guidelines and processes"
+    echo -e "  • user-guide/ - User documentation and tutorials"
+    echo -e "  • security/ - Security policies and procedures"
+    echo -e "  • troubleshooting/ - Common issues and solutions"
+}
+
 generate_microservices() {
     local project_name="${1:-microservices-stack}"
     local output_path="${2:-./}"
@@ -954,6 +1019,10 @@ case "$1" in
         shift
         generate_microservices "$@"
         ;;
+    docs|documentation)
+        shift
+        generate_docs_structure "$@"
+        ;;
     *)
         echo -e "${RED}Error: Unknown directory type '$1'${NC}"
         echo "Available types:"
@@ -976,6 +1045,9 @@ case "$1" in
         echo ""
         echo -e "${GREEN}Complex Architectures:${NC}"
         echo "  microservices             - Complete microservices stack with Docker"
+        echo ""
+        echo -e "${GREEN}Documentation:${NC}"
+        echo "  docs, documentation       - Comprehensive documentation structure"
         exit 1
         ;;
 esac 

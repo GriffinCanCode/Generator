@@ -1,0 +1,12 @@
+# Technology Stack Documentation
+
+Technology stack and tooling documentation for {{PROJECT_NAME}}.
+
+## Documents
+
+- `overview.md` - Complete technology stack overview
+- `frontend.md` - Frontend technologies and frameworks
+- `backend.md` - Backend technologies and services
+- `database.md` - Database technologies and design
+- `devops.md` - DevOps tools and infrastructure
+- `monitoring.md` - Monitoring and observability stack 

@@ -1,0 +1,11 @@
+# User Guide
+
+User documentation and tutorials for {{PROJECT_NAME}}.
+
+## Documents
+
+- `getting-started.md` - User getting started guide
+- `tutorials/` - Step-by-step tutorials
+- `features/` - Feature documentation
+- `faq.md` - Frequently asked questions
+- `troubleshooting.md` - User troubleshooting guide 

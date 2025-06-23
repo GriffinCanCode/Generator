@@ -1,0 +1,15 @@
+# {{PROJECT_NAME}} Documentation
+
+Documentation for {{PROJECT_NAME}} project.
+
+## Structure
+
+- `architecture/` - System architecture and design documents
+- `tech-stack/` - Technology stack documentation
+- `api/` - API documentation and reference
+- `development/` - Development guides and setup
+- `deployment/` - Deployment and operations guides
+- `contributing/` - Contributing guidelines
+- `user-guide/` - User documentation
+- `security/` - Security policies and procedures
+- `troubleshooting/` - Common issues and solutions 

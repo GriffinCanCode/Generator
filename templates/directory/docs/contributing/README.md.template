@@ -1,0 +1,11 @@
+# Contributing Documentation
+
+Contributing guidelines and processes for {{PROJECT_NAME}}.
+
+## Documents
+
+- `guidelines.md` - Contributing guidelines
+- `code-of-conduct.md` - Code of conduct
+- `pull-request-template.md` - PR template
+- `issue-templates/` - GitHub issue templates
+- `review-process.md` - Code review process 

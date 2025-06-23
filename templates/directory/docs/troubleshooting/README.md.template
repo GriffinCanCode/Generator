@@ -1,0 +1,11 @@
+# Troubleshooting Documentation
+
+Common issues and solutions for {{PROJECT_NAME}}.
+
+## Documents
+
+- `common-issues.md` - Common problems and solutions
+- `error-codes.md` - Error code reference
+- `performance.md` - Performance troubleshooting
+- `database-issues.md` - Database-related problems
+- `deployment-issues.md` - Deployment troubleshooting 

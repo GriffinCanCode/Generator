@@ -1,0 +1,11 @@
+# Security Documentation
+
+Security policies and procedures for {{PROJECT_NAME}}.
+
+## Documents
+
+- `security-policy.md` - Security policy and reporting
+- `authentication.md` - Authentication implementation
+- `authorization.md` - Authorization and permissions
+- `data-protection.md` - Data protection and privacy
+- `incident-response.md` - Security incident response plan 

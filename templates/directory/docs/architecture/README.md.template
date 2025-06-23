@@ -1,0 +1,11 @@
+# Architecture Documentation
+
+System architecture and design documents for {{PROJECT_NAME}}.
+
+## Documents
+
+- `overview.md` - High-level system architecture
+- `database-design.md` - Database schema and design
+- `api-design.md` - API architecture and design patterns
+- `security-architecture.md` - Security design and implementation
+- `deployment-architecture.md` - Infrastructure and deployment design 

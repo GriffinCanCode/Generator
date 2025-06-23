@@ -1,0 +1,11 @@
+# API Documentation
+
+API documentation and reference for {{PROJECT_NAME}}.
+
+## Documents
+
+- `reference.md` - Complete API reference
+- `authentication.md` - Authentication and authorization
+- `endpoints/` - Individual endpoint documentation
+- `examples/` - API usage examples
+- `postman-collection.json` - Postman collection for testing 

@@ -1,0 +1,12 @@
+# Deployment Documentation
+
+Deployment and operations documentation for {{PROJECT_NAME}}.
+
+## Documents
+
+- `production.md` - Production deployment guide
+- `staging.md` - Staging environment setup
+- `docker.md` - Docker deployment instructions
+- `kubernetes.md` - Kubernetes deployment manifests
+- `monitoring.md` - Production monitoring setup
+- `backup-restore.md` - Backup and restore procedures 

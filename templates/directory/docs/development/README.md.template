@@ -1,0 +1,11 @@
+# Development Documentation
+
+Development guides and setup documentation for {{PROJECT_NAME}}.
+
+## Documents
+
+- `getting-started.md` - Local development setup
+- `coding-standards.md` - Code style and conventions
+- `testing.md` - Testing guidelines and setup
+- `debugging.md` - Debugging tips and tools
+- `workflows.md` - Development workflows and processes 

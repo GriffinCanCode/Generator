@@ -66,6 +66,10 @@ get_smart_mapping() {
         "fullstack"|"full-stack")
             echo "directory:nextjs-fullstack directory:fastapi-backend gitignore:nextjs config:docker config:eslint config:prettier config:vscode"
             ;;
+        # Documentation
+        "docs"|"documentation")
+            echo "directory:docs"
+            ;;
         *)
             echo ""
             ;;
@@ -83,6 +87,7 @@ list_smart_mappings() {
     echo "docker docker-project"
     echo "microservices microservices-stack"
     echo "fullstack full-stack"
+    echo "docs documentation"
 }
 
 # Function to display usage
@@ -106,6 +111,7 @@ usage() {
     echo "  fastapi                Generate FastAPI backend with full setup"
     echo "  microservices          Generate microservices stack with full setup"
     echo "  fullstack              Generate complete fullstack setup"
+    echo "  docs                   Generate comprehensive documentation structure"
     echo ""
     echo "Options:"
     echo "  -h, --help             Show this help message"
@@ -137,6 +143,7 @@ list_smart_options() {
         "docker:config:docker gitignore:docker"
         "microservices:directory:microservices gitignore:microservices config:docker config:kubernetes config:monitoring"
         "fullstack:directory:nextjs-fullstack directory:fastapi-backend gitignore:nextjs config:docker config:eslint config:prettier config:vscode"
+        "docs:directory:docs"
     )
     
     for mapping in "${mappings[@]}"; do
