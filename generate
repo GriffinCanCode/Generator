@@ -95,6 +95,7 @@ usage() {
     echo "  gitignore <language>    Generate .gitignore file for specified language"
     echo "  directory <type>        Generate directory structure"
     echo "  config <type>           Generate configuration files"
+    echo "  license <type>          Generate license file (MIT, Apache-2.0, BSD-3-Clause)"
     echo ""
     echo -e "${PURPLE}Smart Append (Auto-generates related templates):${NC}"
     echo "  electron               Generate Electron app with configs and gitignore"
@@ -117,6 +118,7 @@ usage() {
     echo "  generate electron my-app           # Creates Electron app with all configs"
     echo "  generate python my-project         # Creates Python project with setup"
     echo "  generate fullstack my-app          # Creates complete fullstack setup"
+    echo "  generate license MIT               # Creates MIT license file"
     echo "  generate node --dry-run            # Shows what would be generated"
 }
 
@@ -176,6 +178,16 @@ list_templates() {
         for template in "$TEMPLATES_DIR/config"/*; do
             if [ -f "$template" ]; then
                 basename "$template" | sed 's/^/  - /'
+            fi
+        done
+        echo ""
+    fi
+    
+    if [ -d "$TEMPLATES_DIR/license" ]; then
+        echo -e "${GREEN}License Templates:${NC}"
+        for template in "$TEMPLATES_DIR/license"/*.template; do
+            if [ -f "$template" ]; then
+                basename "$template" .template | sed 's/^/  - /'
             fi
         done
         echo ""
@@ -279,6 +291,259 @@ smart_append() {
     fi
     
     return 0
+}
+
+# Function to detect project owner/author name
+detect_project_name() {
+    local detected_name=""
+    
+    # Priority 1: Check package.json for author information (project-specific)
+    if [ -f "package.json" ]; then
+        local pkg_author=$(grep -o '"author"[[:space:]]*:[[:space:]]*"[^"]*"' package.json 2>/dev/null | sed 's/.*"author"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        if [ -n "$pkg_author" ] && [ "$pkg_author" != "Your Name" ] && [ "$pkg_author" != "TODO" ]; then
+            echo "$pkg_author"
+            return 0
+        fi
+        
+        # Also check for author object format
+        local pkg_author_name=$(grep -A 5 '"author"[[:space:]]*:[[:space:]]*{' package.json 2>/dev/null | grep '"name"' | sed 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        if [ -n "$pkg_author_name" ] && [ "$pkg_author_name" != "Your Name" ] && [ "$pkg_author_name" != "TODO" ]; then
+            echo "$pkg_author_name"
+            return 0
+        fi
+    fi
+    
+    # Priority 2: Check pyproject.toml for Python projects
+    if [ -f "pyproject.toml" ]; then
+        local py_author=$(grep -A 5 'authors[[:space:]]*=' pyproject.toml 2>/dev/null | grep 'name[[:space:]]*=' | head -1 | sed 's/.*name[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/')
+        if [ -n "$py_author" ] && [ "$py_author" != "Your Name" ] && [ "$py_author" != "TODO" ]; then
+            echo "$py_author"
+            return 0
+        fi
+    fi
+    
+    # Priority 3: Check Cargo.toml for Rust projects
+    if [ -f "Cargo.toml" ]; then
+        local rust_author=$(grep '^authors[[:space:]]*=' Cargo.toml 2>/dev/null | sed 's/.*"\([^"]*\)".*/\1/' | head -1)
+        if [ -n "$rust_author" ] && [ "$rust_author" != "Your Name" ] && [ "$rust_author" != "TODO" ]; then
+            echo "$rust_author"
+            return 0
+        fi
+    fi
+    
+    # Priority 4: Check composer.json for PHP projects
+    if [ -f "composer.json" ]; then
+        local php_author=$(grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' composer.json 2>/dev/null | head -1 | sed 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        if [ -n "$php_author" ] && [ "$php_author" != "Your Name" ] && [ "$php_author" != "TODO" ]; then
+            echo "$php_author"
+            return 0
+        fi
+    fi
+    
+    # Priority 5: Check existing LICENSE file for current copyright holder
+    if [ -f "LICENSE" ] || [ -f "LICENSE.txt" ] || [ -f "LICENSE.md" ]; then
+        local license_file=""
+        [ -f "LICENSE" ] && license_file="LICENSE"
+        [ -f "LICENSE.txt" ] && license_file="LICENSE.txt"
+        [ -f "LICENSE.md" ] && license_file="LICENSE.md"
+        
+        if [ -n "$license_file" ]; then
+            local existing_name=$(grep -i "copyright.*[0-9]" "$license_file" 2>/dev/null | sed 's/.*[0-9][0-9][0-9][0-9][-,][[:space:]]*\([^.]*\).*/\1/' | head -1 | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+            if [ -n "$existing_name" ] && [ ${#existing_name} -lt 100 ] && [ "$existing_name" != "$(whoami)" ]; then
+                echo "$existing_name"
+                return 0
+            fi
+        fi
+    fi
+    
+    # Priority 6: Git user name (reliable for individual projects)
+    if git config user.name >/dev/null 2>&1; then
+        detected_name=$(git config user.name 2>/dev/null)
+        if [ -n "$detected_name" ] && [ "$detected_name" != "$(whoami)" ]; then
+            echo "$detected_name"
+            return 0
+        fi
+    fi
+    
+    # Priority 7: Check git commit author names (look for consistent author)
+    if git log --format="%an" >/dev/null 2>&1; then
+        local git_authors=$(git log --format="%an" 2>/dev/null | sort | uniq -c | sort -nr | head -3)
+        local primary_author=$(echo "$git_authors" | head -1 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//')
+        if [ -n "$primary_author" ] && [ "$primary_author" != "$(whoami)" ] && [ ${#primary_author} -lt 50 ]; then
+            echo "$primary_author"
+            return 0
+        fi
+    fi
+    
+    # Priority 8: Check GitHub/GitLab remote for organization/user name
+    if git remote get-url origin >/dev/null 2>&1; then
+        local remote_url=$(git remote get-url origin 2>/dev/null)
+        local repo_owner=""
+        
+        # Parse GitHub/GitLab URLs
+        if [[ "$remote_url" =~ github\.com[:/]([^/]+)/([^/]+) ]]; then
+            repo_owner="${BASH_REMATCH[1]}"
+        elif [[ "$remote_url" =~ gitlab\.com[:/]([^/]+)/([^/]+) ]]; then
+            repo_owner="${BASH_REMATCH[1]}"
+        fi
+        
+        if [ -n "$repo_owner" ] && [ "$repo_owner" != "$(whoami)" ] && [ ${#repo_owner} -lt 30 ]; then
+            # Convert username to more readable format if it looks like a username
+            local formatted_name=$(echo "$repo_owner" | sed 's/-/ /g' | sed 's/_/ /g' | sed 's/\b\w/\U&/g')
+            if [ ${#formatted_name} -lt 50 ]; then
+                echo "$formatted_name"
+                return 0
+            fi
+        fi
+    fi
+    
+    # Priority 9: Use git config user.name even if it matches whoami
+    if git config user.name >/dev/null 2>&1; then
+        detected_name=$(git config user.name 2>/dev/null)
+        if [ -n "$detected_name" ]; then
+            echo "$detected_name"
+            return 0
+        fi
+    fi
+    
+    # Priority 10: Fall back to system username (last resort)
+    echo "$(whoami)"
+}
+
+# Function to detect project date range
+detect_project_dates() {
+    local current_year=$(date +%Y)
+    local git_start_year=""
+    local file_start_year=""
+    
+    # Try to get the earliest git commit year
+    if git rev-parse --git-dir >/dev/null 2>&1; then
+        git_start_year=$(git log --reverse --format="%ad" --date=format:"%Y" 2>/dev/null | head -1)
+    fi
+    
+    # Try to get the earliest file modification year in the project
+    if command -v find >/dev/null 2>&1; then
+        # Look for common source code files
+        local files=$(find . -maxdepth 3 -type f \( -name "*.js" -o -name "*.py" -o -name "*.java" -o -name "*.cpp" -o -name "*.c" -o -name "*.go" -o -name "*.rs" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" -o -name "*.sh" -o -name "*.rb" -o -name "*.php" \) 2>/dev/null | head -5)
+        if [ -n "$files" ]; then
+            # Use stat command appropriate for the OS
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                file_start_year=$(echo "$files" | xargs stat -f "%Sm" -t "%Y" 2>/dev/null | sort -n | head -1)
+            else
+                file_start_year=$(echo "$files" | xargs stat -c "%Y" 2>/dev/null | xargs -I {} date -d @{} +%Y | sort -n | head -1)
+            fi
+        fi
+    fi
+    
+    # Determine the best start year
+    local start_year=""
+    if [ -n "$git_start_year" ] && [ "$git_start_year" -le "$current_year" ]; then
+        start_year="$git_start_year"
+    elif [ -n "$file_start_year" ] && [ "$file_start_year" -le "$current_year" ]; then
+        start_year="$file_start_year"
+    else
+        start_year="$current_year"
+    fi
+    
+    # Return the appropriate date format
+    if [ "$start_year" = "$current_year" ]; then
+        echo "$current_year"
+    else
+        echo "$start_year-$current_year"
+    fi
+}
+
+# Function to generate license
+generate_license() {
+    local license_type="$1"
+    local output_path="${2:-./}"
+    local fullname="${3:-$(detect_project_name)}"
+    local year="${4:-$(detect_project_dates)}"
+    
+    if [ -z "$license_type" ]; then
+        echo -e "${RED}Error: License type not specified${NC}"
+        echo "Usage: generate license <type> [fullname] [year]"
+        echo "Note: If year is not specified, automatically detects project date range from git history or file dates"
+        echo "Available licenses:"
+        for template in "$TEMPLATES_DIR/license"/*.template; do
+            if [ -f "$template" ]; then
+                basename "$template" .template | sed 's/^/  - /'
+            fi
+        done
+        exit 1
+    fi
+    
+    local template_file="$TEMPLATES_DIR/license/${license_type}.template"
+    
+    if [ ! -f "$template_file" ]; then
+        echo -e "${RED}Error: License template for '$license_type' not found${NC}"
+        echo "Available licenses:"
+        for template in "$TEMPLATES_DIR/license"/*.template; do
+            if [ -f "$template" ]; then
+                basename "$template" .template | sed 's/^/  - /'
+            fi
+        done
+        exit 1
+    fi
+    
+    local output_file="$output_path/LICENSE"
+    
+    if [ -f "$output_file" ]; then
+        echo -e "${YELLOW}Warning: LICENSE file already exists. Overwrite? (y/n)${NC}"
+        read -r response
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            echo "Operation cancelled."
+            exit 0
+        fi
+    fi
+    
+    # Replace placeholders in the template using a more robust method
+    # First validate that fullname doesn't contain newlines
+    if [[ "$fullname" == *$'\n'* ]]; then
+        echo -e "${RED}Error: Full name cannot contain newlines${NC}"
+        exit 1
+    fi
+    
+    # Use awk for more reliable substitution
+    awk -v year="$year" -v fullname="$fullname" '
+    {
+        gsub(/\{\{YEAR\}\}/, year)
+        gsub(/\{\{FULLNAME\}\}/, fullname)
+        print
+    }' "$template_file" > "$output_file"
+    
+    echo -e "${GREEN}Generated $license_type license at $output_file${NC}"
+    echo -e "${BLUE}Copyright: $year $fullname${NC}"
+    
+    # Show detection info if parameters were auto-detected
+    local show_name_info=false
+    local show_date_info=false
+    
+    if [ $# -lt 3 ]; then
+        show_name_info=true
+    fi
+    
+    if [ $# -lt 4 ]; then
+        show_date_info=true
+    fi
+    
+    if [ "$show_name_info" = true ] || [ "$show_date_info" = true ]; then
+        echo -e "${YELLOW}Auto-detection info:${NC}"
+        
+        if [ "$show_name_info" = true ]; then
+            echo -e "${YELLOW}  • Name: Auto-detected from project context${NC}"
+        fi
+        
+        if [ "$show_date_info" = true ]; then
+            if [[ "$year" == *"-"* ]]; then
+                echo -e "${YELLOW}  • Date: Auto-detected range from project history${NC}"
+            elif [ "$year" = "$(date +%Y)" ]; then
+                echo -e "${YELLOW}  • Date: Using current year${NC}"
+            else
+                echo -e "${YELLOW}  • Date: Auto-detected year: $year${NC}"
+            fi
+        fi
+    fi
 }
 
 # Function to generate gitignore
@@ -393,6 +658,21 @@ main() {
         config)
             "$GENERATORS_DIR/config.sh" "${args[@]:1}"
             ;;
+        license)
+            # Handle license generation with proper argument parsing
+            local license_type="${args[1]}"
+            local license_fullname="${args[2]}"
+            local license_year="${args[3]}"
+            
+            # If no fullname provided, use default
+            if [ -z "$license_fullname" ]; then
+                generate_license "$license_type" "$output_path"
+            elif [ -z "$license_year" ]; then
+                generate_license "$license_type" "$output_path" "$license_fullname"
+            else
+                generate_license "$license_type" "$output_path" "$license_fullname" "$license_year"
+            fi
+            ;;
         *)
             echo -e "${RED}Error: Unknown command '$command'${NC}"
             echo ""
@@ -408,6 +688,7 @@ main() {
             echo "  generate gitignore <language>"
             echo "  generate directory <type>"
             echo "  generate config <type>"
+            echo "  generate license <type>"
             exit 1
             ;;
     esac
